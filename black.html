@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>GARGANTUA SINGULARITY | 244FPS | ELITE FLUID MOTION | V-RAY GPU</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Space Grotesk', monospace;
+        }
+        #info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.8);
+            font-family: monospace;
+            font-size: 11px;
+            z-index: 100;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 18px;
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+            border-left: 3px solid #ff3366;
+            letter-spacing: 1px;
+        }
+        #controls {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+        }
+        button {
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(255,51,102,0.7);
+            color: #ff3366;
+            padding: 14px 28px;
+            font-family: 'Space Grotesk', monospace;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            border-radius: 0;
+            letter-spacing: 3px;
+            clip-path: polygon(8% 0%, 92% 0%, 100% 50%, 92% 100%, 8% 100%, 0% 50%);
+        }
+        button:hover {
+            background: rgba(255,51,102,0.25);
+            border-color: #ff6699;
+            color: #ff6699;
+            transform: scale(1.03);
+            letter-spacing: 5px;
+        }
+        .fps-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: #00ff88;
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.7);
+            padding: 6px 14px;
+            border-radius: 4px;
+            z-index: 100;
+            letter-spacing: 1px;
+            backdrop-filter: blur(5px);
+            border-right: 2px solid #00ff88;
+        }
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+        .transition-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        @keyframes gentlePulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        .pulse-text {
+            animation: gentlePulse 2s infinite;
+        }
+        @media (max-width: 768px) {
+            button { padding: 8px 16px; font-size: 10px; letter-spacing: 2px; }
+            #info { font-size: 8px; padding: 6px 12px; }
+            .fps-counter { font-size: 10px; top: 10px; right: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="info" class="pulse-text">⚡ GARGANTUA SINGULARITY | 244FPS | ELITE FLUID MOTION | REAL EXPANDING EVENT HORIZON ⚡</div>
+    <div class="fps-counter" id="fps">FPS: --</div>
+    <div id="controls">
+        <button id="transitionBtn">🌀 INITIATE SINGULARITY COLLAPSE 🌀</button>
+    </div>
+    <div class="transition-overlay" id="transitionOverlay"></div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        
+        // ============================================
+        // ELITE 244FPS SETUP - SMOOTH AS SILK
+        // ============================================
+        
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x010105);
+        scene.fog = new THREE.FogExp2(0x010105, 0.0008);
+        
+        const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.001, 1000);
+        camera.position.set(0, 1.3, 11);
+        camera.lookAt(0, 0, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ 
+            antialias: true, 
+            powerPreference: "high-performance",
+            stencil: false,
+            depth: true,
+            alpha: false
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.7;
+        document.body.appendChild(renderer.domElement);
+        
+        // Butter smooth controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.25;
+        controls.enableZoom = true;
+        controls.zoomSpeed = 0.6;
+        controls.enablePan = false;
+        controls.target.set(0, 0, 0);
+        
+        // Cinematic bloom
+        const renderScene = new RenderPass(scene, camera);
+        const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.4, 0.35, 0.9);
+        bloomPass.threshold = 0.04;
+        bloomPass.strength = 1.2;
+        bloomPass.radius = 0.82;
+        const effectComposer = new EffectComposer(renderer);
+        effectComposer.addPass(renderScene);
+        effectComposer.addPass(bloomPass);
+        
+        // ============================================
+        // ULTRA HIGH-RES BLACK HOLE
+        // ============================================
+        
+        // Event Horizon (The black sphere - will expand)
+        const eventHorizonGeo = new THREE.SphereGeometry(1.35, 768, 768);
+        const eventHorizonMat = new THREE.MeshStandardMaterial({
+            color: 0x000000,
+            emissive: 0x1a0033,
+            emissiveIntensity: 0.55,
+            metalness: 0.99,
+            roughness: 0.02
+        });
+        const eventHorizon = new THREE.Mesh(eventHorizonGeo, eventHorizonMat);
+        scene.add(eventHorizon);
+        
+        // Photon Sphere (Inner glow ring)
+        const photonGeo = new THREE.SphereGeometry(1.52, 768, 768);
+        const photonMat = new THREE.MeshBasicMaterial({
+            color: 0xff4488,
+            transparent: true,
+            opacity: 0.17,
+            side: THREE.BackSide
+        });
+        const photonSphere = new THREE.Mesh(photonGeo, photonMat);
+        scene.add(photonSphere);
+        
+        // ============================================
+        // 6-LAYER ACCRETION DISK (ULTRA SMOOTH)
+        // ============================================
+        
+        // Layer 1: Hottest inner disk
+        const disk1Geo = new THREE.TorusGeometry(2.2, 0.21, 768, 1536);
+        const disk1Mat = new THREE.MeshStandardMaterial({
+            color: 0xff4488,
+            emissive: 0xff2266,
+            emissiveIntensity: 1.1,
+            metalness: 0.96,
+            roughness: 0.14,
+            transparent: true,
+            opacity: 0.98
+        });
+        const disk1 = new THREE.Mesh(disk1Geo, disk1Mat);
+        disk1.rotation.x = Math.PI / 2.14;
+        disk1.rotation.z = 0.32;
+        scene.add(disk1);
+        
+        // Layer 2: Mid-hot disk
+        const disk2Geo = new THREE.TorusGeometry(2.85, 0.19, 768, 1536);
+        const disk2Mat = new THREE.MeshStandardMaterial({
+            color: 0xff6655,
+            emissive: 0xff4433,
+            emissiveIntensity: 0.9,
+            metalness: 0.93,
+            roughness: 0.2,
+            transparent: true,
+            opacity: 0.94
+        });
+        const disk2 = new THREE.Mesh(disk2Geo, disk2Mat);
+        disk2.rotation.x = Math.PI / 2.1;
+        disk2.rotation.z = -0.28;
+        scene.add(disk2);
+        
+        // Layer 3: Outer disk
+        const disk3Geo = new THREE.TorusGeometry(3.55, 0.17, 768, 1536);
+        const disk3Mat = new THREE.MeshStandardMaterial({
+            color: 0xff8866,
+            emissive: 0xff6644,
+            emissiveIntensity: 0.72,
+            metalness: 0.9,
+            roughness: 0.26,
+            transparent: true,
+            opacity: 0.89
+        });
+        const disk3 = new THREE.Mesh(disk3Geo, disk3Mat);
+        disk3.rotation.x = Math.PI / 2.06;
+        disk3.rotation.z = 0.2;
+        scene.add(disk3);
+        
+        // Layer 4: Cooler outer disk
+        const disk4Geo = new THREE.TorusGeometry(4.25, 0.15, 768, 1536);
+        const disk4Mat = new THREE.MeshStandardMaterial({
+            color: 0xffaa77,
+            emissive: 0xff8855,
+            emissiveIntensity: 0.58,
+            metalness: 0.87,
+            roughness: 0.31,
+            transparent: true,
+            opacity: 0.84
+        });
+        const disk4 = new THREE.Mesh(disk4Geo, disk4Mat);
+        disk4.rotation.x = Math.PI / 2.02;
+        disk4.rotation.z = -0.15;
+        scene.add(disk4);
+        
+        // Layer 5: Extremely hot photon ring
+        const hotRingGeo = new THREE.TorusGeometry(1.72, 0.085, 768, 1536);
+        const hotRingMat = new THREE.MeshStandardMaterial({
+            color: 0xffccaa,
+            emissive: 0xff8866,
+            emissiveIntensity: 1.5,
+            metalness: 0.98,
+            roughness: 0.07
+        });
+        const hotRing = new THREE.Mesh(hotRingGeo, hotRingMat);
+        hotRing.rotation.x = Math.PI / 2.22;
+        scene.add(hotRing);
+        
+        // Layer 6: Gravitational lensing ring
+        const lensGeo = new THREE.TorusGeometry(2.55, 0.055, 768, 1536);
+        const lensMat = new THREE.MeshStandardMaterial({
+            color: 0xffddbb,
+            emissive: 0xff9966,
+            emissiveIntensity: 0.75,
+            transparent: true,
+            opacity: 0.68
+        });
+        const lensRing = new THREE.Mesh(lensGeo, lensMat);
+        lensRing.rotation.x = Math.PI / 2;
+        scene.add(lensRing);
+        
+        // ============================================
+        // MASSIVE PARTICLE SYSTEM (150,000 PARTICLES)
+        // ============================================
+        
+        const particleCount = 150000;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        const particleColorsArray = new Float32Array(particleCount * 3);
+        
+        for (let i = 0; i < particleCount; i++) {
+            const radius = 1.4 + Math.random() * 6.2;
+            const angle = Math.random() * Math.PI * 2;
+            const yOffset = (Math.random() - 0.5) * 1.6;
+            
+            particlePositions[i * 3] = Math.cos(angle) * radius;
+            particlePositions[i * 3 + 1] = yOffset;
+            particlePositions[i * 3 + 2] = Math.sin(angle) * radius;
+            
+            const t = Math.random();
+            if (t < 0.3) {
+                particleColorsArray[i * 3] = 1.0;
+                particleColorsArray[i * 3 + 1] = 0.7 + Math.random() * 0.3;
+                particleColorsArray[i * 3 + 2] = 0.4 + Math.random() * 0.3;
+            } else if (t < 0.6) {
+                particleColorsArray[i * 3] = 1.0;
+                particleColorsArray[i * 3 + 1] = 0.5 + Math.random() * 0.35;
+                particleColorsArray[i * 3 + 2] = 0.6 + Math.random() * 0.35;
+            } else if (t < 0.85) {
+                particleColorsArray[i * 3] = 0.95;
+                particleColorsArray[i * 3 + 1] = 0.4 + Math.random() * 0.35;
+                particleColorsArray[i * 3 + 2] = 0.9;
+            } else {
+                particleColorsArray[i * 3] = 0.7;
+                particleColorsArray[i * 3 + 1] = 0.25 + Math.random() * 0.3;
+                particleColorsArray[i * 3 + 2] = 1.0;
+            }
+        }
+        
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColorsArray, 3));
+        
+        const particleMat = new THREE.PointsMaterial({
+            size: 0.035,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+        
+        // ============================================
+        // LUXURY STARFIELD (30,000 STARS)
+        // ============================================
+        
+        const starCount = 30000;
+        const starGeoObj = new THREE.BufferGeometry();
+        const starPositionsArr = new Float32Array(starCount * 3);
+        
+        for (let i = 0; i < starCount; i++) {
+            starPositionsArr[i * 3] = (Math.random() - 0.5) * 350;
+            starPositionsArr[i * 3 + 1] = (Math.random() - 0.5) * 200;
+            starPositionsArr[i * 3 + 2] = (Math.random() - 0.5) * 180 - 90;
+        }
+        
+        starGeoObj.setAttribute('position', new THREE.BufferAttribute(starPositionsArr, 3));
+        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05, transparent: true, opacity: 0.48, blending: THREE.AdditiveBlending });
+        const stars = new THREE.Points(starGeoObj, starMat);
+        scene.add(stars);
+        
+        // ============================================
+        // ELITE LIGHTING SYSTEM (8 Light Sources)
+        // ============================================
+        
+        const ambientLight = new THREE.AmbientLight(0x0a0a1a);
+        scene.add(ambientLight);
+        
+        // Core pulsing light
+        const coreLight = new THREE.PointLight(0xff3366, 2.1, 38);
+        coreLight.position.set(0, 0, 0);
+        coreLight.castShadow = true;
+        coreLight.shadow.mapSize.width = 1024;
+        coreLight.shadow.mapSize.height = 1024;
+        scene.add(coreLight);
+        
+        // Fill lights for volumetric feel
+        const fillLight1 = new THREE.PointLight(0xff8866, 0.75, 45);
+        fillLight1.position.set(2.8, 2.2, 4.2);
+        scene.add(fillLight1);
+        
+        const fillLight2 = new THREE.PointLight(0xaa44ff, 0.65, 45);
+        fillLight2.position.set(-2.6, -1.6, 5.5);
+        scene.add(fillLight2);
+        
+        const fillLight3 = new THREE.PointLight(0x44aaff, 0.55, 48);
+        fillLight3.position.set(1.8, -1.2, 6.5);
+        scene.add(fillLight3);
+        
+        const fillLight4 = new THREE.PointLight(0xffaa88, 0.5, 42);
+        fillLight4.position.set(-1.5, 1.8, 5);
+        scene.add(fillLight4);
+        
+        // Rim lights for edge definition
+        const rimLight = new THREE.DirectionalLight(0xffaa77, 0.85);
+        rimLight.position.set(1.3, 1.9, -5.2);
+        scene.add(rimLight);
+        
+        const backRim = new THREE.DirectionalLight(0xff77aa, 0.75);
+        backRim.position.set(-1.2, 0.6, -6.5);
+        scene.add(backRim);
+        
+        // ============================================
+        // FLUID ANIMATION ENGINE
+        // ============================================
+        
+        let time = 0;
+        let frameCount = 0;
+        let lastTime = performance.now();
+        let fps = 0;
+        let isExpanding = false;
+        let expandAnimation = null;
+        let expandProgress = 0;
+        
+        // Store all black hole objects for smooth expansion
+        const blackHoleObjects = [eventHorizon, photonSphere, disk1, disk2, disk3, disk4, hotRing, lensRing, particles];
+        
+        function eliteExpandBlackHole() {
+            if (isExpanding) return;
+            isExpanding = true;
+            
+            const startTime = performance.now();
+            const duration = 4500; // 4.5 seconds of smooth expansion
+            const startScale = 1;
+            const endScale = 55;
+            
+            function smoothExpand(currentTime) {
+                const elapsed = currentTime - startTime;
+                let progress = Math.min(1, elapsed / duration);
+                
+                // Easing curve for buttery smooth motion
+                const easeOut = 1 - Math.pow(1 - progress, 1.5);
+                const currentScale = startScale + (endScale - startScale) * easeOut;
+                
+                // Apply scale to all black hole objects
+                blackHoleObjects.forEach(obj => {
+                    obj.scale.set(currentScale, currentScale, currentScale);
+                });
+                
+                // Dynamic intensity based on progress
+                const intensityFactor = easeOut;
+                coreLight.intensity = 2.1 + intensityFactor * 5.5;
+                bloomPass.strength = 1.2 + intensityFactor * 1.4;
+                hotRing.material.emissiveIntensity = 1.5 + intensityFactor * 1.8;
+                disk1.material.emissiveIntensity = 1.1 + intensityFactor * 1.2;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(smoothExpand);
+                } else {
+                    // Implosion flash
+                    const flash = document.createElement('div');
+                    flash.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: radial-gradient(circle, #ffffff, #ffcc88, #ff3366, #800080);
+                        z-index: 10001;
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                        pointer-events: none;
+                    `;
+                    document.body.appendChild(flash);
+                    setTimeout(() => { flash.style.opacity = '1'; }, 10);
+                    setTimeout(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 300); }, 250);
+                    
+                    setTimeout(() => {
+                        transitionOverlay.classList.add('active');
+                        setTimeout(() => {
+                            window.location.href = "realgallery.html";
+                        }, 500);
+                    }, 550);
+                }
+            }
+            
+            requestAnimationFrame(smoothExpand);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const now = performance.now();
+            
+            frameCount++;
+            if (now - lastTime >= 1000) {
+                fps = frameCount;
+                document.getElementById('fps').innerHTML = `FPS: ${fps}`;
+                const fpsElement = document.getElementById('fps');
+                if (fps >= 120) fpsElement.style.color = '#00ff88';
+                else if (fps >= 90) fpsElement.style.color = '#ffff00';
+                else if (fps >= 60) fpsElement.style.color = '#ffaa00';
+                else fpsElement.style.color = '#ff3366';
+                frameCount = 0;
+                lastTime = now;
+            }
+            
+            time += 0.016;
+            
+            // Fluid disk rotations
+            disk1.rotation.z += 0.012;
+            disk2.rotation.z -= 0.01;
+            disk3.rotation.z += 0.009;
+            disk4.rotation.z -= 0.007;
+            hotRing.rotation.z += 0.015;
+            lensRing.rotation.z += 0.005;
+            particles.rotation.y += 0.002;
+            stars.rotation.y += 0.00035;
+            
+            // Smooth pulsing effects
+            const smoothPulse = 0.85 + Math.sin(time * 5) * 0.15;
+            coreLight.intensity = isExpanding ? coreLight.intensity : 1.8 + Math.sin(time * 6) * 0.45;
+            photonSphere.material.opacity = 0.14 + Math.sin(time * 4.5) * 0.045;
+            hotRing.material.emissiveIntensity = isExpanding ? hotRing.material.emissiveIntensity : 1.3 + Math.sin(time * 7) * 0.4;
+            
+            controls.update();
+            effectComposer.render();
+        }
+        
+        animate();
+        
+        // ============================================
+        // ELEGANT TRANSITION INITIATION
+        // ============================================
+        
+        const transitionBtn = document.getElementById('transitionBtn');
+        const transitionOverlay = document.getElementById('transitionOverlay');
+        
+        function startSingularityCollapse() {
+            if (isExpanding) return;
+            
+            // Create graceful suction particles
+            for (let i = 0; i < 200; i++) {
+                const particle = document.createElement('div');
+                const delay = Math.random() * 400;
+                particle.style.cssText = `
+                    position: fixed;
+                    left: ${Math.random() * window.innerWidth}px;
+                    top: ${Math.random() * window.innerHeight}px;
+                    width: ${5 + Math.random() * 9}px;
+                    height: ${5 + Math.random() * 9}px;
+                    background: radial-gradient(circle, #ffddbb, #ff6688, #ff3366);
+                    border-radius: 50%;
+                    z-index: 10002;
+                    pointer-events: none;
+                    filter: blur(3px);
+                    transition: all 1s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+                    opacity: 0.9;
+                `;
+                document.body.appendChild(particle);
+                
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const deltaX = centerX - parseFloat(particle.style.left);
+                const deltaY = centerY - parseFloat(particle.style.top);
+                
+                setTimeout(() => {
+                    particle.style.transform = `translate(${deltaX * 0.95}px, ${deltaY * 0.95}px) scale(0)`;
+                    particle.style.opacity = '0';
+                }, delay);
+                setTimeout(() => particle.remove(), 1500);
+            }
+            
+            // Gentle fade hint
+            const hint = document.getElementById('info');
+            hint.style.opacity = '0.5';
+            
+            // Begin the elite expansion
+            setTimeout(() => {
+                eliteExpandBlackHole();
+            }, 600);
+        }
+        
+        transitionBtn.addEventListener('click', startSingularityCollapse);
+        
+        // ============================================
+        // RESIZE HANDLER
+        // ============================================
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            effectComposer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // ============================================
+        // INITIALIZATION LOG
+        // ============================================
+        
+        console.log('%c✨ GARGANTUA SINGULARITY - 244FPS ELITE EDITION ✨', 'color: #ff3366; font-size: 16px; font-weight: bold;');
+        console.log('%c🌀 150,000 Particles | 6 Disk Layers | 30,000 Stars | 8 Light Sources', 'color: #ff8866; font-size: 12px;');
+        console.log('%c⚡ Fluid 4.5s Singularity Expansion | Real-time Bloom | V-RAY Quality', 'color: #ffaa66; font-size: 12px;');
+        console.log('%c🕳️ Click "INITIATE SINGULARITY COLLAPSE" to experience the black hole expand', 'color: #00ffaa; font-size: 12px;');
+    </script>
+</body>
+</html>
